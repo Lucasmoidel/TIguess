@@ -4,36 +4,73 @@
 #include <debug.h>
 #include <string.h>
 #include <time.h>
+#include <stdio.h>
 
-void main(void) {
+#define MAX_LINES 10
+#define MAX_LINE_LEN 30
 
+char lines[MAX_LINES][MAX_LINE_LEN];
+uint8_t line_count = 0;
 
-    // Seed the random number generator using the current time.
-    // This ensures a different sequence of numbers each time the program runs.
-    srand(time(NULL));
-
-    int randomint = (rand() % (100 - 1 + 1)) + 1;
-    char randomstr[4];
-
-    sprintf(randomstr, "%d", randomint);
-    char guess[4];
-
+void redraw_screen(void) {
     os_ClrHome();
-    //os_PutStrLine(randomstr);
-    //os_NewLine();
-    while (atoi(guess) != randomint){
-        os_GetStringInput("guess a random number between 1 and 100: ", guess, 4);os_NewLine();
-        if (atoi(guess) <= randomint){
-            os_PutStrLine(guess);os_PutStrLine(" was too low ");os_NewLine();
-        } else if (atoi(guess) >= randomint){
-            os_PutStrLine(guess);os_PutStrLine(" was too high ");os_NewLine();
-        }
-        
-        
+    for (uint8_t i = 0; i < line_count; i++) {
+        os_SetCursorPos(i, 0);
+        os_PutStrLine(lines[i]);
     }
+}
+
+void scroll_add(const char *line) {
+    if (line_count < MAX_LINES) {
+        strncpy(lines[line_count], line, MAX_LINE_LEN - 1);
+        lines[line_count][MAX_LINE_LEN - 1] = '\0';
+        line_count++;
+    } else {
+        memmove(lines[0], lines[1], (MAX_LINES - 1) * MAX_LINE_LEN);
+        strncpy(lines[MAX_LINES - 1], line, MAX_LINE_LEN - 1);
+        lines[MAX_LINES - 1][MAX_LINE_LEN - 1] = '\0';
+    }
+    redraw_screen();
+}
+
+int main(void) {
+    srand(time(NULL));
+    int randomint = (rand() % 100) + 1;
+
+    char guess[8] = {0};
+    char msg[MAX_LINE_LEN] = {0};
+
     os_ClrHome();
-    os_PutStrLine("you did it");
-    os_NewLine();
-    os_PutStrLine(guess);os_PutStrLine(" was correct");
+    line_count = 0;
+
+    while (1) {
+        memset(guess, 0, sizeof(guess));
+        os_GetStringInput("guess a number (1-100):", guess, sizeof(guess));
+        int intguess = atoi(guess);
+
+        scroll_add("");
+
+        if (intguess <= 0 || intguess > 100) {
+            snprintf(msg, sizeof(msg), "%s is out of range", guess);
+            scroll_add(msg);
+            scroll_add("");
+            
+        } else if (intguess < randomint) {
+            snprintf(msg, sizeof(msg), "%s was too low", guess);
+            scroll_add(msg);
+            scroll_add("");
+        } else if (intguess > randomint) {
+            snprintf(msg, sizeof(msg), "%s was too high", guess);
+            scroll_add(msg);
+            scroll_add("");
+        } else {
+            snprintf(msg, sizeof(msg), "%s was correct", guess);
+            scroll_add("you did it");
+            scroll_add(msg);
+            break;
+        }
+    }
+
     while (!os_GetCSC());
+    return 0; // exit cleanly
 }
