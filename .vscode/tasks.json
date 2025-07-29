@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Make",
+            "type": "shell",
+            "command": "make",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Run Make Upload",
+            "type": "shell",
+            "command": "make upload",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "dependsOn": "Run Make",
+            "dependsOrder": "sequence"
+        },
+        {
+            "label": "Build and Upload",
+            "type": "shell",
+            "command": "echo Running Build and Upload",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "Run Make Upload",
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        }
+    ]
+}
